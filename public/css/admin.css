@@ -442,3 +442,159 @@ textarea.form-control {
     grid-template-columns: 1fr;
   }
 }
+
+/* ========================================================
+   ADMIN LOCK SCREEN STYLES (Proteksi Akses Password)
+   ======================================================== */
+.lock-screen-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(100vh - 120px);
+  padding: 2rem 1rem;
+}
+
+.lock-card {
+  width: 100%;
+  max-width: 440px;
+  background: var(--bg-card);
+  backdrop-filter: blur(25px);
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius-lg, 16px);
+  padding: 2.5rem 2rem;
+  box-shadow: var(--shadow-card);
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  animation: fadeInDown 0.4s ease-out forwards;
+}
+
+.lock-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--primary, #ff3366), var(--accent, #7928ca), var(--secondary, #00b4d8));
+}
+
+.lock-badge {
+  width: 68px;
+  height: 68px;
+  margin: 0 auto 1.5rem;
+  border-radius: 50%;
+  background: rgba(255, 51, 102, 0.12);
+  border: 1px solid rgba(255, 51, 102, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  box-shadow: 0 0 20px rgba(255, 51, 102, 0.2);
+}
+
+.lock-title {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: var(--text-main);
+  margin-bottom: 0.5rem;
+}
+
+.lock-subtitle {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+  margin-bottom: 1.75rem;
+}
+
+.lock-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.lock-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.lock-input-icon {
+  position: absolute;
+  left: 1rem;
+  font-size: 1.1rem;
+  pointer-events: none;
+  opacity: 0.6;
+}
+
+.lock-password-input {
+  width: 100%;
+  padding-left: 2.75rem !important;
+  padding-right: 2.75rem !important;
+  font-size: 1.05rem;
+  letter-spacing: 2px;
+  height: 48px;
+}
+
+.btn-toggle-pwd {
+  position: absolute;
+  right: 0.75rem;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 1.1rem;
+  padding: 0.3rem;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+}
+
+.btn-toggle-pwd:hover {
+  opacity: 1;
+}
+
+.lock-error-msg {
+  color: #ef4444;
+  font-size: 0.82rem;
+  font-weight: 600;
+  margin-top: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.btn-unlock {
+  width: 100%;
+  height: 48px;
+  font-size: 1rem;
+  font-weight: 600;
+  justify-content: center;
+  box-shadow: 0 4px 15px rgba(255, 51, 102, 0.3);
+}
+
+.lock-footer {
+  margin-top: 1.75rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--border-glass);
+}
+
+.lock-back-link {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.lock-back-link:hover {
+  color: var(--primary, #ff3366);
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-15px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

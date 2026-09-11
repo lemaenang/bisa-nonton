@@ -32,66 +32,106 @@
       <a href="/" class="btn btn-outline">
         👁️ Lihat Website
       </a>
-      <button class="btn btn-primary" id="btnOpenAddModal">
+      <button class="btn btn-outline" id="btnLockAdmin" title="Kunci Akses Panel Admin" style="display: none;">
+        🔒 Kunci
+      </button>
+      <button class="btn btn-primary" id="btnOpenAddModal" style="display: none;">
         ➕ Tambah Film / Serial
       </button>
     </div>
   </header>
 
-  <!-- Admin Container -->
-  <div class="container" style="padding-top: 1.5rem;">
-    <!-- Stats Cards -->
-    <div class="stats-grid">
-      <div class="stat-card">
-        <div class="stat-icon" style="color: #00b4d8;">📚</div>
-        <div class="stat-info">
-          <h4>Total Koleksi</h4>
-          <div class="stat-number" id="statTotal">0</div>
+  <!-- ========================================================
+       ADMIN LOCK SCREEN (Proteksi Akses Password)
+       ======================================================== -->
+  <section class="lock-screen-wrapper" id="adminLockScreen">
+    <div class="lock-card">
+      <div class="lock-badge">
+        <span class="lock-icon">🔒</span>
+      </div>
+      <h2 class="lock-title">Panel Admin Terkunci</h2>
+      <p class="lock-subtitle">Masukkan password administrator untuk mengelola katalog film dan serial.</p>
+
+      <form id="adminLoginForm" class="lock-form">
+        <div class="form-group" style="text-align: left;">
+          <label for="adminPasswordInput" class="form-label">Password Admin</label>
+          <div class="lock-input-wrapper">
+            <span class="lock-input-icon">🔑</span>
+            <input type="password" id="adminPasswordInput" class="form-input lock-password-input" placeholder="Ketik password..." autocomplete="current-password" required>
+            <button type="button" class="btn-toggle-pwd" id="btnTogglePwd" title="Tampilkan/Sembunyikan password">👁️</button>
+          </div>
+          <div class="lock-error-msg" id="lockErrorMsg" style="display: none;"></div>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-unlock" id="btnSubmitLogin">
+          <span>Buka Kunci Panel</span> 🔓
+        </button>
+      </form>
+
+      <div class="lock-footer">
+        <a href="/" class="lock-back-link">← Kembali ke Halaman Utama</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================
+       ADMIN MAIN CONTENT (Hanya tampil setelah unlocked)
+       ======================================================== -->
+  <main id="adminMainContent" style="display: none;">
+    <div class="container" style="padding-top: 1.5rem;">
+      <!-- Stats Cards -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon" style="color: #00b4d8;">📚</div>
+          <div class="stat-info">
+            <h4>Total Koleksi</h4>
+            <div class="stat-number" id="statTotal">0</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="color: #ff3366;">🎬</div>
+          <div class="stat-info">
+            <h4>Total Film</h4>
+            <div class="stat-number" id="statMovies">0</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="color: #7928ca;">📺</div>
+          <div class="stat-info">
+            <h4>Total Serial TV</h4>
+            <div class="stat-number" id="statSeries">0</div>
+          </div>
         </div>
       </div>
-      <div class="stat-card">
-        <div class="stat-icon" style="color: #ff3366;">🎬</div>
-        <div class="stat-info">
-          <h4>Total Film</h4>
-          <div class="stat-number" id="statMovies">0</div>
+
+      <!-- Management Card & Table -->
+      <div class="admin-card">
+        <div class="admin-card-header">
+          <h3 style="font-size: 1.15rem; font-weight: 700;">Daftar Koleksi Video</h3>
+          <div class="search-wrapper" style="max-width: 320px;">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="adminSearchInput" class="search-input" placeholder="Cari di daftar kelola...">
+          </div>
         </div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-icon" style="color: #7928ca;">📺</div>
-        <div class="stat-info">
-          <h4>Total Serial TV</h4>
-          <div class="stat-number" id="statSeries">0</div>
+
+        <div class="table-responsive">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th style="width: 35%;">Film / Serial</th>
+                <th style="width: 15%;">Tipe</th>
+                <th style="width: 30%;">Sumber Stream</th>
+                <th style="width: 20%; text-align: right;">Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="adminTableBody">
+              <!-- Diisi secara dinamis oleh admin.js -->
+            </tbody>
+          </table>
         </div>
       </div>
     </div>
-
-    <!-- Management Card & Table -->
-    <div class="admin-card">
-      <div class="admin-card-header">
-        <h3 style="font-size: 1.15rem; font-weight: 700;">Daftar Koleksi Video</h3>
-        <div class="search-wrapper" style="max-width: 320px;">
-          <span class="search-icon">🔍</span>
-          <input type="text" id="adminSearchInput" class="search-input" placeholder="Cari di daftar kelola...">
-        </div>
-      </div>
-
-      <div class="table-responsive">
-        <table class="admin-table">
-          <thead>
-            <tr>
-              <th style="width: 35%;">Film / Serial</th>
-              <th style="width: 15%;">Tipe</th>
-              <th style="width: 30%;">Sumber Stream</th>
-              <th style="width: 20%; text-align: right;">Aksi</th>
-            </tr>
-          </thead>
-          <tbody id="adminTableBody">
-            <!-- Diisi secara dinamis oleh admin.js -->
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </div>
+  </main>
 
   <!-- ========================================================
        MODAL FORM TAMBAH / EDIT FILM & SERIAL

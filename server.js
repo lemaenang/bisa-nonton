@@ -108,6 +108,40 @@ app.get('/api/proxy', async (req, res) => {
   }
 });
 
+// === ADMIN AUTHENTICATION MIDDLEWARE & ENDPOINTS ===
+const getAdminPassword = () => process.env.ADMIN_PASSWORD || 'admin123';
+
+function verifyAdminAuth(req, res, next) {
+  const expectedPassword = getAdminPassword();
+  const authPass = req.headers['x-admin-password'];
+  
+  if (!authPass || authPass !== expectedPassword) {
+    return res.status(401).json({ 
+      success: false, 
+      message: 'Akses ditolak: Password admin diperlukan atau salah.' 
+    });
+  }
+  next();
+}
+
+// Endpoint Verifikasi Password Admin
+app.post('/api/admin/verify', (req, res) => {
+  const { password } = req.body;
+  const expectedPassword = getAdminPassword();
+  
+  if (!password || password !== expectedPassword) {
+    return res.status(401).json({ 
+      success: false, 
+      message: 'Password salah. Silakan coba lagi.' 
+    });
+  }
+  
+  res.json({ 
+    success: true, 
+    message: 'Password benar! Akses panel admin diberikan.' 
+  });
+});
+
 // === API ROUTES ===
 
 // 1. Get All Movies (with optional query ?search=...&type=...)
@@ -134,8 +168,8 @@ app.get('/api/movies/:id', async (req, res) => {
   }
 });
 
-// 3. Create Movie / Series
-app.post('/api/movies', async (req, res) => {
+// 3. Create Movie / Series (Protected with verifyAdminAuth)
+app.post('/api/movies', verifyAdminAuth, async (req, res) => {
   try {
     const { title, cover_url, backdrop_url, description, type, year, genre, stream_url, episodes } = req.body;
     if (!title || !title.trim()) {
@@ -160,8 +194,8 @@ app.post('/api/movies', async (req, res) => {
   }
 });
 
-// 4. Update Movie / Series
-app.put('/api/movies/:id', async (req, res) => {
+// 4. Update Movie / Series (Protected with verifyAdminAuth)
+app.put('/api/movies/:id', verifyAdminAuth, async (req, res) => {
   try {
     const updated = await movieService.updateMovie(req.params.id, req.body);
     if (!updated) {
@@ -173,8 +207,8 @@ app.put('/api/movies/:id', async (req, res) => {
   }
 });
 
-// 5. Delete Movie / Series
-app.delete('/api/movies/:id', async (req, res) => {
+// 5. Delete Movie / Series (Protected with verifyAdminAuth)
+app.delete('/api/movies/:id', verifyAdminAuth, async (req, res) => {
   try {
     const deleted = await movieService.deleteMovie(req.params.id);
     if (!deleted) {

@@ -13,6 +13,17 @@ const statTotal = document.getElementById('statTotal');
 const statMovies = document.getElementById('statMovies');
 const statSeries = document.getElementById('statSeries');
 
+// Auth & Lock Screen Elements
+const AUTH_STORAGE_KEY = 'bisanonton_admin_pass';
+const adminLockScreen = document.getElementById('adminLockScreen');
+const adminMainContent = document.getElementById('adminMainContent');
+const adminLoginForm = document.getElementById('adminLoginForm');
+const adminPasswordInput = document.getElementById('adminPasswordInput');
+const btnTogglePwd = document.getElementById('btnTogglePwd');
+const lockErrorMsg = document.getElementById('lockErrorMsg');
+const btnSubmitLogin = document.getElementById('btnSubmitLogin');
+const btnLockAdmin = document.getElementById('btnLockAdmin');
+
 // Modal Elements
 const modal = document.getElementById('movieFormModal');
 const modalTitle = document.getElementById('modalFormTitle');
@@ -39,11 +50,140 @@ const btnAddEpisode = document.getElementById('btnAddEpisode');
 const episodeInputsContainer = document.getElementById('episodeInputsContainer');
 
 document.addEventListener('DOMContentLoaded', () => {
-  loadAdminMovies();
   setupEventListeners();
+  checkAuthAndInit();
 });
 
+// Helper Manajemen Password di SessionStorage
+function getAdminPassword() {
+  return sessionStorage.getItem(AUTH_STORAGE_KEY) || '';
+}
+
+function setAdminPassword(pwd) {
+  sessionStorage.setItem(AUTH_STORAGE_KEY, pwd);
+}
+
+function clearAdminPassword() {
+  sessionStorage.removeItem(AUTH_STORAGE_KEY);
+}
+
+// Tampilkan Tampilan Terkunci (Lock Screen)
+function showLockedUI() {
+  if (adminLockScreen) adminLockScreen.style.display = 'flex';
+  if (adminMainContent) adminMainContent.style.display = 'none';
+  if (btnLockAdmin) btnLockAdmin.style.display = 'none';
+  if (btnOpenAddModal) btnOpenAddModal.style.display = 'none';
+  if (adminPasswordInput) {
+    adminPasswordInput.value = '';
+    setTimeout(() => adminPasswordInput.focus(), 150);
+  }
+  if (lockErrorMsg) lockErrorMsg.style.display = 'none';
+}
+
+// Tampilkan Tampilan Terbuka (Admin Panel Aktif)
+function showUnlockedUI() {
+  if (adminLockScreen) adminLockScreen.style.display = 'none';
+  if (adminMainContent) adminMainContent.style.display = 'block';
+  if (btnLockAdmin) btnLockAdmin.style.display = 'inline-flex';
+  if (btnOpenAddModal) btnOpenAddModal.style.display = 'inline-flex';
+  loadAdminMovies();
+}
+
+// Panggil API Verifikasi Password
+async function verifyPassword(pwd) {
+  const res = await fetch('/api/admin/verify', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ password: pwd })
+  });
+  const data = await res.json();
+  return { ok: res.ok && data.success, message: data.message };
+}
+
+// Cek status autentikasi saat halaman dibuka
+async function checkAuthAndInit() {
+  const savedPass = getAdminPassword();
+  if (!savedPass) {
+    showLockedUI();
+    return;
+  }
+
+  try {
+    const result = await verifyPassword(savedPass);
+    if (result.ok) {
+      showUnlockedUI();
+    } else {
+      clearAdminPassword();
+      showLockedUI();
+    }
+  } catch (err) {
+    console.warn('Gagal verifikasi session password:', err);
+    showLockedUI();
+  }
+}
+
+// Handler Submit Login Password
+async function handleLoginSubmit(e) {
+  e.preventDefault();
+  const pwd = adminPasswordInput.value.trim();
+  if (!pwd) return;
+
+  btnSubmitLogin.disabled = true;
+  btnSubmitLogin.innerHTML = '<span>Memeriksa...</span> ⏳';
+  if (lockErrorMsg) lockErrorMsg.style.display = 'none';
+
+  try {
+    const result = await verifyPassword(pwd);
+    if (result.ok) {
+      setAdminPassword(pwd);
+      showUnlockedUI();
+      showToast('Kunci panel admin terbuka! Selamat datang. ✨');
+    } else {
+      if (lockErrorMsg) {
+        lockErrorMsg.textContent = `❌ ${result.message || 'Password salah!'}`;
+        lockErrorMsg.style.display = 'flex';
+      }
+      adminPasswordInput.select();
+    }
+  } catch (err) {
+    console.error('Login error:', err);
+    if (lockErrorMsg) {
+      lockErrorMsg.textContent = '❌ Terjadi kesalahan jaringan saat verifikasi.';
+      lockErrorMsg.style.display = 'flex';
+    }
+  } finally {
+    btnSubmitLogin.disabled = false;
+    btnSubmitLogin.innerHTML = '<span>Buka Kunci Panel</span> 🔓';
+  }
+}
+
+// Handler Kunci Panel / Logout
+function handleLockAdmin() {
+  clearAdminPassword();
+  showLockedUI();
+  showToast('Panel admin telah dikunci kembali. 🔒');
+}
+
 function setupEventListeners() {
+  // Login Form Submit
+  if (adminLoginForm) {
+    adminLoginForm.addEventListener('submit', handleLoginSubmit);
+  }
+
+  // Tombol Kunci Admin
+  if (btnLockAdmin) {
+    btnLockAdmin.addEventListener('click', handleLockAdmin);
+  }
+
+  // Toggle Password Visibility
+  if (btnTogglePwd && adminPasswordInput) {
+    btnTogglePwd.addEventListener('click', () => {
+      const isPwd = adminPasswordInput.type === 'password';
+      adminPasswordInput.type = isPwd ? 'text' : 'password';
+      btnTogglePwd.textContent = isPwd ? '🙈' : '👁️';
+    });
+  }
+
   // Buka Modal Tambah
   btnOpenAddModal.addEventListener('click', () => openAddModal());
 
@@ -351,21 +491,36 @@ async function handleFormSubmit(e) {
   saveBtn.disabled = true;
   saveBtn.textContent = 'Menyimpan...';
 
+  const adminPass = getAdminPassword();
+
   try {
     let res;
     if (isEditMode) {
       const id = formMovieId.value;
       res = await fetch(`/api/movies/${id}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'x-admin-password': adminPass
+        },
         body: JSON.stringify(payload)
       });
     } else {
       res = await fetch('/api/movies', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'x-admin-password': adminPass
+        },
         body: JSON.stringify(payload)
       });
+    }
+
+    if (res.status === 401) {
+      showToast('Sesi admin berakhir atau password salah. Panel dikunci.');
+      clearAdminPassword();
+      showLockedUI();
+      return;
     }
 
     const data = await res.json();
@@ -391,10 +546,23 @@ window.deleteMovie = async function(id, title) {
     return;
   }
 
+  const adminPass = getAdminPassword();
+
   try {
     const res = await fetch(`/api/movies/${id}`, {
-      method: 'DELETE'
+      method: 'DELETE',
+      headers: {
+        'x-admin-password': adminPass
+      }
     });
+
+    if (res.status === 401) {
+      showToast('Akses ditolak: Password admin diperlukan atau salah.');
+      clearAdminPassword();
+      showLockedUI();
+      return;
+    }
+
     const data = await res.json();
     if (data.success) {
       showToast(`"${title}" berhasil dihapus.`);
