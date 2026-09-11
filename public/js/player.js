@@ -19,7 +19,8 @@ class BisaPlayer {
     // Controls
     this.controlsBar = document.getElementById('customControlsBar');
     this.btnPlayPause = document.getElementById('btnPlayPause');
-    this.btnStop = document.getElementById('btnStop');
+    this.btnSkipBack = document.getElementById('btnSkipBack');
+    this.btnSkipForward = document.getElementById('btnSkipForward');
     this.btnPrevEp = document.getElementById('btnPrevEp');
     this.btnNextEp = document.getElementById('btnNextEp');
     this.timeDisplay = document.getElementById('timeDisplay');
@@ -27,6 +28,12 @@ class BisaPlayer {
     this.progressFilled = document.getElementById('progressFilled');
     this.progressBuffer = document.getElementById('progressBuffer');
     this.progressThumb = document.getElementById('progressThumb');
+
+    // Playback Speed Selector
+    this.btnSpeed = document.getElementById('btnSpeed');
+    this.speedMenu = document.getElementById('speedMenu');
+    this.speedLabel = document.getElementById('currentSpeedLabel');
+    this.currentSpeed = 1;
 
     // Quality Selector
     this.btnQuality = document.getElementById('btnQuality');
@@ -68,8 +75,13 @@ class BisaPlayer {
     this.btnPlayPause.addEventListener('click', () => this.togglePlay());
     this.video.addEventListener('click', () => this.togglePlay());
 
-    // Stop button (hentikan video dan reset posisi ke awal)
-    this.btnStop.addEventListener('click', () => this.stop());
+    // Lompat mundur / maju 10 detik
+    if (this.btnSkipBack) {
+      this.btnSkipBack.addEventListener('click', () => this.skipTime(-10));
+    }
+    if (this.btnSkipForward) {
+      this.btnSkipForward.addEventListener('click', () => this.skipTime(10));
+    }
 
     // Episode Prev / Next button
     this.btnPrevEp.addEventListener('click', () => this.playPreviousEpisode());
@@ -86,15 +98,37 @@ class BisaPlayer {
     // Fullscreen
     this.btnFullscreen.addEventListener('click', () => this.toggleFullscreen());
 
+    // Speed Menu Toggle
+    if (this.btnSpeed && this.speedMenu) {
+      this.btnSpeed.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (this.qualityMenu) this.qualityMenu.classList.remove('show');
+        this.speedMenu.classList.toggle('show');
+      });
+
+      const speedOptions = this.speedMenu.querySelectorAll('.speed-option');
+      speedOptions.forEach(opt => {
+        opt.addEventListener('click', () => {
+          const speed = parseFloat(opt.dataset.speed);
+          this.setPlaybackSpeed(speed);
+          this.speedMenu.classList.remove('show');
+        });
+      });
+    }
+
     // Quality Menu Toggle
     this.btnQuality.addEventListener('click', (e) => {
       e.stopPropagation();
+      if (this.speedMenu) this.speedMenu.classList.remove('show');
       this.qualityMenu.classList.toggle('show');
     });
 
     document.addEventListener('click', (e) => {
-      if (!this.qualityMenu.contains(e.target) && e.target !== this.btnQuality) {
+      if (this.qualityMenu && !this.qualityMenu.contains(e.target) && e.target !== this.btnQuality) {
         this.qualityMenu.classList.remove('show');
+      }
+      if (this.speedMenu && !this.speedMenu.contains(e.target) && e.target !== this.btnSpeed) {
+        this.speedMenu.classList.remove('show');
       }
     });
 
@@ -110,6 +144,9 @@ class BisaPlayer {
     this.video.addEventListener('playing', () => {
       this.showLoading(false);
       this.btnPlayPause.textContent = '⏸';
+      if (this.currentSpeed && this.currentSpeed !== 1) {
+        this.video.playbackRate = this.currentSpeed;
+      }
     });
     this.video.addEventListener('pause', () => {
       this.btnPlayPause.textContent = '▶';
@@ -143,12 +180,12 @@ class BisaPlayer {
       } else if (e.key === ' ' || e.code === 'Space') {
         e.preventDefault();
         this.togglePlay();
-      } else if (e.key === 'ArrowRight') {
+      } else if (e.key === 'ArrowRight' || e.key === 'l' || e.key === 'L') {
         e.preventDefault();
-        this.video.currentTime = Math.min(this.video.duration || 0, this.video.currentTime + 10);
-      } else if (e.key === 'ArrowLeft') {
+        this.skipTime(10);
+      } else if (e.key === 'ArrowLeft' || e.key === 'j' || e.key === 'J') {
         e.preventDefault();
-        this.video.currentTime = Math.max(0, this.video.currentTime - 10);
+        this.skipTime(-10);
       } else if (e.key === 'f' || e.key === 'F') {
         e.preventDefault();
         this.toggleFullscreen();
@@ -437,10 +474,50 @@ class BisaPlayer {
     }
   }
 
-  // Stop playback and reset to beginning
+  // Lompat waktu video (maju/mundur dalam detik)
+  skipTime(seconds) {
+    if (!this.video) return;
+    const duration = this.video.duration || 0;
+    const current = this.video.currentTime || 0;
+    const newTime = Math.max(0, Math.min(duration, current + seconds));
+    this.video.currentTime = newTime;
+    this.onTimeUpdate();
+
+    if (seconds < 0) {
+      this.flashCenterIcon('⏪ -10s');
+    } else {
+      this.flashCenterIcon('+10s ⏩');
+    }
+  }
+
+  // Atur kecepatan pemutaran video (playback speed)
+  setPlaybackSpeed(speed) {
+    this.currentSpeed = speed;
+    if (this.video) {
+      this.video.playbackRate = speed;
+    }
+    if (this.speedLabel) {
+      this.speedLabel.textContent = `${speed}x`;
+    }
+    if (this.speedMenu) {
+      const options = this.speedMenu.querySelectorAll('.speed-option');
+      options.forEach(opt => {
+        if (parseFloat(opt.dataset.speed) === speed) {
+          opt.classList.add('active');
+        } else {
+          opt.classList.remove('active');
+        }
+      });
+    }
+    this.flashCenterIcon(`⚡ ${speed}x`);
+  }
+
+  // Stop playback and reset to beginning (tetap dipertahankan untuk backward compatibility)
   stop() {
-    this.video.pause();
-    this.video.currentTime = 0;
+    if (this.video) {
+      this.video.pause();
+      this.video.currentTime = 0;
+    }
     this.flashCenterIcon('⏹');
     this.onTimeUpdate();
   }
@@ -587,6 +664,8 @@ class BisaPlayer {
       this.hls = null;
     }
     this.modal.classList.remove('active');
+    if (this.speedMenu) this.speedMenu.classList.remove('show');
+    if (this.qualityMenu) this.qualityMenu.classList.remove('show');
     document.body.style.overflow = '';
   }
 }
