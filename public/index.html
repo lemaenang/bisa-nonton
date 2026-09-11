@@ -138,8 +138,22 @@
               <div class="controls-left">
                 <!-- Play / Pause -->
                 <button class="ctrl-btn" id="btnPlayPause" title="Play / Pause (Spasi)">▶</button>
-                <!-- Stop -->
-                <button class="ctrl-btn" id="btnStop" title="Stop (Hentikan & Reset)">⏹</button>
+                <!-- Skip Back 10s -->
+                <button class="ctrl-btn ctrl-btn-skip" id="btnSkipBack" title="Mundur 10 Detik (← atau J)">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M1 4v6h6"></path>
+                    <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+                  </svg>
+                  <span class="skip-badge">10</span>
+                </button>
+                <!-- Skip Forward 10s -->
+                <button class="ctrl-btn ctrl-btn-skip" id="btnSkipForward" title="Maju 10 Detik (→ atau L)">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M23 4v6h-6"></path>
+                    <path d="M20.49 15a9 9 0 1 1-2.13-9.36L23 10"></path>
+                  </svg>
+                  <span class="skip-badge">10</span>
+                </button>
                 <!-- Prev Episode -->
                 <button class="ctrl-btn" id="btnPrevEp" title="Episode Sebelumnya" disabled>⏮</button>
                 <!-- Next Episode -->
@@ -150,6 +164,21 @@
               </div>
 
               <div class="controls-right">
+                <!-- Speed Selector Dropdown -->
+                <div class="speed-dropdown-wrapper">
+                  <button class="speed-badge-btn" id="btnSpeed" title="Kecepatan Video">
+                    ⚡ <span id="currentSpeedLabel">1x</span>
+                  </button>
+                  <div class="speed-menu" id="speedMenu">
+                    <button class="speed-option" data-speed="0.5">0.5x</button>
+                    <button class="speed-option" data-speed="0.75">0.75x</button>
+                    <button class="speed-option active" data-speed="1">1x (Normal)</button>
+                    <button class="speed-option" data-speed="1.25">1.25x</button>
+                    <button class="speed-option" data-speed="1.5">1.5x</button>
+                    <button class="speed-option" data-speed="2">2x</button>
+                  </div>
+                </div>
+
                 <!-- Quality Selector Dropdown -->
                 <div class="quality-dropdown-wrapper">
                   <button class="quality-badge-btn" id="btnQuality">
