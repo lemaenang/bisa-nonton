@@ -9,8 +9,8 @@ const __dirname = path.dirname(__filename);
 const DATA_FILE = path.join(__dirname, '..', 'data', 'movies.json');
 
 // Cek Kredensial Supabase Kustom dari Environment Variables
-const supabaseUrl = process.env.SUPABASE_URL?.trim();
-const supabaseKey = process.env.SUPABASE_KEY?.trim();
+const supabaseUrl = (process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL)?.trim();
+const supabaseKey = (process.env.SUPABASE_KEY || process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY)?.trim();
 
 const isSupabaseConfigured = Boolean(supabaseUrl && supabaseKey);
 const supabase = isSupabaseConfigured ? createClient(supabaseUrl, supabaseKey) : null;
