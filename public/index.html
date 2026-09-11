@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bisa Nonton - Nonton Film & Serial Favorit</title>
+  <meta name="description" content="Koleksi film dan serial favorit pilihan dengan pemutar streaming berkecepatan tinggi dan kualitas jernih.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎬</text></svg>">
+  
+  <!-- CSS Stylesheets -->
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/player.css">
+
+  <!-- Theme Manager (Load in head to prevent theme flashing) -->
+  <script src="js/theme.js"></script>
+
+  <!-- Hls.js CDN for M3U8 streaming -->
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+</head>
+<body>
+
+  <!-- Top Navigation -->
+  <header class="navbar">
+    <div class="logo-container" onclick="window.location.reload()">
+      <div class="logo-badge">▶</div>
+      <div class="logo-text">BISA<span>NONTON</span></div>
+    </div>
+
+    <div class="nav-center">
+      <div class="search-wrapper">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="searchInput" class="search-input" placeholder="Cari judul film, serial, atau genre...">
+      </div>
+    </div>
+
+    <div class="nav-actions">
+      <!-- Theme Switcher (Light / Dark Mode) -->
+      <button class="theme-toggle-btn" title="Ganti Mode Tampilan">
+        <span class="theme-icon">🌙</span>
+        <span class="theme-text">Mode Gelap</span>
+      </button>
+
+      <a href="/admin.html" class="btn btn-outline" title="Kelola Film & Serial">
+        ⚙️ Kelola Film
+      </a>
+    </div>
+  </header>
+
+  <!-- Hero Highlight Banner -->
+  <section class="hero-section" id="heroBanner" style="display: none;">
+    <div class="hero-overlay"></div>
+    <div class="hero-content">
+      <div class="hero-badge" id="heroBadge">Featured</div>
+      <h1 class="hero-title" id="heroTitle">Memuat Judul Film...</h1>
+      <div class="hero-meta" id="heroMeta">
+        <span id="heroYear">2024</span> • <span id="heroGenre">Action</span>
+      </div>
+      <p class="hero-desc" id="heroDesc">Sinopsis ringkas film unggulan.</p>
+      <div class="hero-buttons">
+        <button class="btn btn-primary" id="heroPlayBtn">
+          ▶ Putar Sekarang
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main Content Area -->
+  <main class="container">
+    <div class="section-header">
+      <h2 class="section-title">
+        <span>🎬</span> Koleksi Video Favorit
+      </h2>
+      <div class="filter-tabs">
+        <button class="filter-btn active" data-type="all">Semua</button>
+        <button class="filter-btn" data-type="movie">Film</button>
+        <button class="filter-btn" data-type="series">Serial TV</button>
+      </div>
+    </div>
+
+    <!-- Movie Cards Grid -->
+    <div class="movie-grid" id="moviesGrid">
+      <!-- Diisi secara dinamis oleh app.js -->
+    </div>
+  </main>
+
+  <!-- ========================================================
+       VIDEO PLAYER & THEATER MODAL
+       ======================================================== -->
+  <div class="player-modal" id="playerModal">
+    <!-- Modal Header -->
+    <div class="player-header">
+      <div class="player-title-info">
+        <div class="player-main-title" id="playerTitle">Judul Video</div>
+        <div class="player-episode-subtitle" id="playerSubtitle">Memutar...</div>
+      </div>
+      <button class="player-close-btn" id="playerCloseBtn" title="Tutup Pemutar (Esc)">✕</button>
+    </div>
+
+    <!-- Modal Body: Video + Episode List Sidebar -->
+    <div class="player-body">
+      <div class="player-video-section">
+        <div class="video-container" id="videoContainer">
+          <!-- Main Video Element -->
+          <video id="main-video-element" playsinline></video>
+
+          <!-- Center Play/Pause Flash Overlay -->
+          <div class="center-play-overlay" id="centerPlayOverlay">
+            <div class="center-play-btn-circle" id="centerPlayIcon">▶</div>
+          </div>
+
+          <!-- Spinner Loading -->
+          <div class="video-loading-spinner" id="videoLoadingSpinner">
+            <div class="spinner-circle"></div>
+          </div>
+
+          <!-- Autoplay Next Episode Countdown Overlay -->
+          <div class="autoplay-countdown-overlay hidden" id="autoplayOverlay">
+            <div class="autoplay-header">
+              <span>⏱️ Auto-Play Episode Selanjutnya</span>
+            </div>
+            <div class="autoplay-next-title" id="autoplayNextTitle">Episode 2: Menembus Batas</div>
+            <div class="countdown-bar-container">
+              <div class="countdown-bar-fill" id="countdownBarFill"></div>
+            </div>
+            <div class="autoplay-actions">
+              <button class="autoplay-btn-now" id="autoplayPlayNowBtn">Putar Sekarang</button>
+              <button class="autoplay-btn-cancel" id="autoplayCancelBtn">Batal</button>
+            </div>
+          </div>
+
+          <!-- Custom Player Control Bar -->
+          <div class="custom-controls-bar" id="customControlsBar">
+            <!-- Progress Bar -->
+            <div class="progress-container" id="progressBar">
+              <div class="progress-buffer" id="progressBuffer"></div>
+              <div class="progress-filled" id="progressFilled"></div>
+              <div class="progress-thumb" id="progressThumb"></div>
+            </div>
+
+            <!-- Main Controls Buttons -->
+            <div class="controls-main-row">
+              <div class="controls-left">
+                <!-- Play / Pause -->
+                <button class="ctrl-btn" id="btnPlayPause" title="Play / Pause (Spasi)">▶</button>
+                <!-- Stop -->
+                <button class="ctrl-btn" id="btnStop" title="Stop (Hentikan & Reset)">⏹</button>
+                <!-- Prev Episode -->
+                <button class="ctrl-btn" id="btnPrevEp" title="Episode Sebelumnya" disabled>⏮</button>
+                <!-- Next Episode -->
+                <button class="ctrl-btn" id="btnNextEp" title="Episode Berikutnya" disabled>⏭</button>
+
+                <!-- Time -->
+                <div class="time-display" id="timeDisplay">00:00 / 00:00</div>
+              </div>
+
+              <div class="controls-right">
+                <!-- Quality Selector Dropdown -->
+                <div class="quality-dropdown-wrapper">
+                  <button class="quality-badge-btn" id="btnQuality">
+                    ⚙️ <span id="currentQualityLabel">Auto</span>
+                  </button>
+                  <div class="quality-menu" id="qualityMenu">
+                    <!-- Opsi kualitas di-generate oleh player.js -->
+                  </div>
+                </div>
+
+                <!-- Volume -->
+                <div class="volume-wrapper">
+                  <button class="ctrl-btn" id="btnMute" title="Mute / Unmute">🔊</button>
+                  <input type="range" class="volume-slider" id="volumeSlider" min="0" max="1" step="0.05" value="1">
+                </div>
+
+                <!-- Fullscreen -->
+                <button class="ctrl-btn" id="btnFullscreen" title="Layar Penuh (F)">⛶</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Episode Sidebar (For Series) -->
+      <aside class="episode-sidebar hidden" id="episodeSidebar">
+        <div class="sidebar-header">
+          <div class="sidebar-title">
+            <span>📑</span> Daftar Episode
+          </div>
+          <span class="episode-count-badge" id="episodeCountBadge">0 Episode</span>
+        </div>
+        <div class="episode-list" id="episodeList">
+          <!-- Diisi dinamis -->
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div class="toast" id="toast">
+    <span id="toastMsg">Pemberitahuan</span>
+  </div>
+
+  <!-- Application Scripts -->
+  <script src="js/player.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

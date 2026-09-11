@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kelola Film - Admin Bisa Nonton</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎬</text></svg>">
+  
+  <!-- CSS Stylesheets -->
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/admin.css">
+
+  <!-- Theme Manager (Load in head to prevent theme flashing) -->
+  <script src="js/theme.js"></script>
+</head>
+<body>
+
+  <!-- Admin Top Bar -->
+  <header class="admin-header">
+    <div class="logo-container" onclick="window.location.href='/'">
+      <div class="logo-badge">▶</div>
+      <div class="logo-text">BISA<span>NONTON</span> <span style="font-size: 0.8rem; opacity: 0.7; font-weight: 500; margin-left: 0.3rem;">[ADMIN PANEL]</span></div>
+    </div>
+
+    <div class="nav-actions">
+      <!-- Theme Switcher -->
+      <button class="theme-toggle-btn" title="Ganti Mode Tampilan">
+        <span class="theme-icon">🌙</span>
+        <span class="theme-text">Mode Gelap</span>
+      </button>
+
+      <a href="/" class="btn btn-outline">
+        👁️ Lihat Website
+      </a>
+      <button class="btn btn-primary" id="btnOpenAddModal">
+        ➕ Tambah Film / Serial
+      </button>
+    </div>
+  </header>
+
+  <!-- Admin Container -->
+  <div class="container" style="padding-top: 1.5rem;">
+    <!-- Stats Cards -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon" style="color: #00b4d8;">📚</div>
+        <div class="stat-info">
+          <h4>Total Koleksi</h4>
+          <div class="stat-number" id="statTotal">0</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon" style="color: #ff3366;">🎬</div>
+        <div class="stat-info">
+          <h4>Total Film</h4>
+          <div class="stat-number" id="statMovies">0</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon" style="color: #7928ca;">📺</div>
+        <div class="stat-info">
+          <h4>Total Serial TV</h4>
+          <div class="stat-number" id="statSeries">0</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Management Card & Table -->
+    <div class="admin-card">
+      <div class="admin-card-header">
+        <h3 style="font-size: 1.15rem; font-weight: 700;">Daftar Koleksi Video</h3>
+        <div class="search-wrapper" style="max-width: 320px;">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="adminSearchInput" class="search-input" placeholder="Cari di daftar kelola...">
+        </div>
+      </div>
+
+      <div class="table-responsive">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th style="width: 35%;">Film / Serial</th>
+              <th style="width: 15%;">Tipe</th>
+              <th style="width: 30%;">Sumber Stream</th>
+              <th style="width: 20%; text-align: right;">Aksi</th>
+            </tr>
+          </thead>
+          <tbody id="adminTableBody">
+            <!-- Diisi secara dinamis oleh admin.js -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================
+       MODAL FORM TAMBAH / EDIT FILM & SERIAL
+       ======================================================== -->
+  <div class="modal-backdrop" id="movieFormModal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 id="modalFormTitle">Tambah Koleksi Baru</h3>
+        <button class="player-close-btn" id="modalCloseBtn" style="width: 32px; height: 32px; font-size: 1rem;">✕</button>
+      </div>
+
+      <form id="movieForm">
+        <div class="modal-body">
+          <input type="hidden" id="formMovieId">
+
+          <!-- Content Type Selector -->
+          <div class="form-group">
+            <label class="form-label">Tipe Konten <span class="req">*</span></label>
+            <div class="type-segmented-control">
+              <input type="radio" id="typeMovie" name="contentType" value="movie" checked>
+              <label for="typeMovie">🎬 Film Biasa</label>
+
+              <input type="radio" id="typeSeries" name="contentType" value="series">
+              <label for="typeSeries">📺 Serial TV (Multi-Episode)</label>
+            </div>
+          </div>
+
+          <!-- Judul Film -->
+          <div class="form-group">
+            <label class="form-label" for="formTitle">Judul <span class="req">*</span></label>
+            <input type="text" id="formTitle" class="form-control" placeholder="Contoh: Spider-Man: Across the Spider-Verse" required>
+          </div>
+
+          <!-- Poster Cover URL & Preview -->
+          <div class="form-group">
+            <label class="form-label" for="formCover">URL Cover Poster</label>
+            <div class="image-preview-wrapper">
+              <div class="preview-box" id="coverPreviewBox">
+                <span id="previewPlaceholder">Preview</span>
+                <img id="coverPreviewImg" style="display: none;" alt="Preview">
+              </div>
+              <div style="flex: 1;">
+                <input type="url" id="formCover" class="form-control" placeholder="https://example.com/poster.jpg">
+                <small style="color: var(--text-dim); font-size: 0.75rem; margin-top: 0.25rem; display: block;">
+                  Paste link gambar poster (Unsplash, TMDB, CDN, dsb).
+                </small>
+              </div>
+            </div>
+          </div>
+
+          <!-- Row: Tahun & Genre -->
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="formYear">Tahun Rilis</label>
+              <input type="number" id="formYear" class="form-control" placeholder="2024" value="2024">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="formGenre">Genre</label>
+              <input type="text" id="formGenre" class="form-control" placeholder="Action, Sci-Fi, Anime">
+            </div>
+          </div>
+
+          <!-- Sinopsis / Deskripsi -->
+          <div class="form-group">
+            <label class="form-label" for="formDesc">Sinopsis / Ringkasan Cerita</label>
+            <textarea id="formDesc" class="form-control" placeholder="Ceritakan sedikit tentang alur cerita film ini..."></textarea>
+          </div>
+
+          <!-- SECTION FILM BIASA: Stream URL -->
+          <div id="movieStreamSection">
+            <div class="form-group">
+              <label class="form-label" for="formStreamUrl">
+                Link Streaming Video (.m3u8) <span class="req">*</span>
+              </label>
+              <input type="url" id="formStreamUrl" class="form-control" placeholder="https://stream.playcdn.de/playlist/.../480.m3u8?x=1">
+              <small style="color: var(--text-dim); font-size: 0.75rem; margin-top: 0.25rem; display: block;">
+                Format HLS (.m3u8) atau MP4 langsung dari CDN/web streaming.
+              </small>
+            </div>
+          </div>
+
+          <!-- SECTION SERIAL TV: Dynamic Episode Manager -->
+          <div id="seriesStreamSection" style="display: none;">
+            <div class="episode-manager-box">
+              <div class="episode-manager-header">
+                <label class="form-label" style="margin: 0;">Daftar Episode Serial</label>
+                <button type="button" class="btn btn-outline" id="btnAddEpisode" style="padding: 0.35rem 0.8rem; font-size: 0.8rem;">
+                  ➕ Tambah Episode
+                </button>
+              </div>
+              <div id="episodeInputsContainer" style="display: flex; flex-direction: column; gap: 0.6rem;">
+                <!-- Dinamis diisi baris episode -->
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" id="btnCancelModal">Batal</button>
+          <button type="submit" class="btn btn-primary" id="btnSaveMovie">💾 Simpan Film</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div class="toast" id="toast">
+    <span id="toastMsg">Pemberitahuan</span>
+  </div>
+
+  <!-- Admin JS -->
+  <script src="js/admin.js"></script>
+</body>
+</html>

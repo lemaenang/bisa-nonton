@@ -1,0 +1,26 @@
+{
+  "name": "bisa-nonton",
+  "version": "1.0.0",
+  "description": "Website streaming film & serial favorit dengan HLS player dan admin backend sederhana",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.116.0",
+    "cors": "^2.8.5",
+    "dotenv": "^17.4.2",
+    "express": "^4.21.2"
+  },
+  "keywords": [
+    "streaming",
+    "movies",
+    "series",
+    "hls",
+    "video-player"
+  ],
+  "author": "",
+  "license": "ISC"
+}
