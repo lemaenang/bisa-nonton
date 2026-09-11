@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { Readable } from 'stream';
 import 'dotenv/config';
 import * as movieService from './services/movieService.js';
 
@@ -15,6 +16,97 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
+
+// === STREAMING PROXY ENDPOINT (Mengatasi CORS pada link m3u8 eksternal) ===
+app.get('/api/proxy', async (req, res) => {
+  const targetUrl = req.query.url;
+  if (!targetUrl) {
+    return res.status(400).send('Missing url parameter');
+  }
+
+  try {
+    const upstreamUrl = new URL(targetUrl);
+    
+    // Header CORS bebas untuk browser
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', '*');
+
+    const headers = {
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      'Accept': '*/*',
+    };
+    if (req.headers.range) {
+      headers['Range'] = req.headers.range;
+    }
+
+    const response = await fetch(upstreamUrl.toString(), {
+      headers,
+      redirect: 'follow'
+    });
+
+    if (!response.ok) {
+      return res.status(response.status).send(`Upstream error: ${response.statusText}`);
+    }
+
+    const contentType = response.headers.get('content-type') || '';
+    const isM3U8 = targetUrl.includes('.m3u8') || contentType.includes('mpegurl') || contentType.includes('application/x-mpegURL');
+
+    if (isM3U8) {
+      // Baca manifest m3u8 dan ubah URL segment agar melewati proxy
+      const m3u8Text = await response.text();
+      const lines = m3u8Text.split(/\r?\n/);
+      const rewrittenLines = lines.map(line => {
+        const trimmed = line.trim();
+        if (!trimmed) return line;
+
+        // Jika baris adalah URL segment (tidak diawali #)
+        if (!trimmed.startsWith('#')) {
+          const resolvedUrl = new URL(trimmed, upstreamUrl).toString();
+          return `/api/proxy?url=${encodeURIComponent(resolvedUrl)}`;
+        }
+
+        // Handle URI kunci enkripsi (#EXT-X-KEY:...,URI="...")
+        if (trimmed.startsWith('#EXT-X-KEY:') && trimmed.includes('URI="')) {
+          return trimmed.replace(/URI="([^"]+)"/, (match, uri) => {
+            const resolvedUri = new URL(uri, upstreamUrl).toString();
+            return `URI="/api/proxy?url=${encodeURIComponent(resolvedUri)}"`;
+          });
+        }
+
+        // Handle URI map (#EXT-X-MAP:...,URI="...")
+        if (trimmed.startsWith('#EXT-X-MAP:') && trimmed.includes('URI="')) {
+          return trimmed.replace(/URI="([^"]+)"/, (match, uri) => {
+            const resolvedUri = new URL(uri, upstreamUrl).toString();
+            return `URI="/api/proxy?url=${encodeURIComponent(resolvedUri)}"`;
+          });
+        }
+
+        return line;
+      });
+
+      res.setHeader('Content-Type', 'application/vnd.apple.mpegurl');
+      return res.send(rewrittenLines.join('\n'));
+    } else {
+      // Ini adalah segmen video (.pict, .ts, dsb.)
+      res.setHeader('Content-Type', 'video/mp2t');
+      if (response.headers.get('content-length')) {
+        res.setHeader('Content-Length', response.headers.get('content-length'));
+      }
+      if (response.headers.get('content-range')) {
+        res.setHeader('Content-Range', response.headers.get('content-range'));
+        res.status(206);
+      }
+
+      Readable.fromWeb(response.body).pipe(res);
+    }
+  } catch (err) {
+    console.error('Proxy error for URL:', targetUrl, err.message);
+    if (!res.headersSent) {
+      res.status(500).send(`Proxy error: ${err.message}`);
+    }
+  }
+});
 
 // === API ROUTES ===
 

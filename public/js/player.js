@@ -192,6 +192,12 @@ class BisaPlayer {
       return;
     }
 
+    // Gunakan streaming proxy untuk link eksternal agar bebas dari blokir CORS CDN
+    let streamUrl = url.trim();
+    if (streamUrl.startsWith('http://') || streamUrl.startsWith('https://')) {
+      streamUrl = `/api/proxy?url=${encodeURIComponent(streamUrl)}`;
+    }
+
     // Bersihkan instance HLS sebelumnya
     if (this.hls) {
       this.hls.destroy();
@@ -206,7 +212,7 @@ class BisaPlayer {
         backBufferLength: 90
       });
 
-      this.hls.loadSource(url);
+      this.hls.loadSource(streamUrl);
       this.hls.attachMedia(this.video);
 
       this.hls.on(Hls.Events.MANIFEST_PARSED, (event, data) => {
@@ -238,7 +244,7 @@ class BisaPlayer {
     } 
     // Fallback untuk Safari atau browser dengan dukungan native HLS
     else if (this.video.canPlayType('application/vnd.apple.mpegurl')) {
-      this.video.src = url;
+      this.video.src = streamUrl;
       this.video.addEventListener('loadedmetadata', () => {
         this.video.play().catch(console.warn);
       }, { once: true });
